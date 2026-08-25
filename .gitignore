@@ -1,0 +1,33 @@
+# Python 字节码缓存
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 虚拟环境（你的项目里是 .venv）
+.venv/
+
+# Django 本地数据库
+*.sqlite3
+db.sqlite3
+
+# 敏感环境变量
+.env
+.env.*
+
+# 日志
+*.log
+
+# IDE / 编辑器
+.idea/
+.vscode/
+*.swp
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 静态文件收集目录（让克隆者自己 collectstatic）git
+staticfiles/
+
+# 用户上传的媒体文件
+media/

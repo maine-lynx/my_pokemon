@@ -1,0 +1,71 @@
+<!-- battles/templates/battles/battle.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>宝可梦对战</title>
+    <style>
+        .battle-field { display: flex; justify-content: space-between; padding: 20px; }
+        .pokemon-card { border: 2px solid #333; border-radius: 10px; padding: 15px; width: 200px; }
+        .hp-bar { height: 12px; background: #ddd; border-radius: 6px; overflow: hidden; }
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #4caf50, #8bc34a); transition: width 0.5s; }
+        .log-box { margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 8px; height: 120px; overflow-y: auto; }
+        .moves { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .move-btn { padding: 10px; border: none; border-radius: 6px; background: #ffcc00; cursor: pointer; }
+        .move-btn:hover { background: #ffaa00; }
+    </style>
+</head>
+<body>
+<div class="battle-field">
+    <div class="pokemon-card">
+        <h3>{{ player_pokemon.species.name }} Lv.{{ player_pokemon.level }}</h3>
+        <div class="hp-bar"><div class="hp-fill" id="player-hp" style="width: 100%"></div></div>
+        <p>HP: {{ battle.player_hp }}</p>
+    </div>
+    <div class="pokemon-card">
+        <h3>野生 {{ wild_pokemon.species.name }} Lv.{{ wild_pokemon.level }}</h3>
+        <div class="hp-bar"><div class="hp-fill" id="wild-hp" style="width: 100%"></div></div>
+        <p>HP: {{ battle.wild_hp }}</p>
+    </div>
+</div>
+
+<div class="moves">
+    {% for move in player_pokemon.moves.all %}
+        <button class="move-btn" onclick="useMove({{ move.id }}, '{{ move.name }}')">
+            {{ move.name }} (威力:{{ move.power }})
+        </button>
+    {% endfor %}
+</div>
+
+<div class="log-box" id="battle-log">
+    {% for msg in battle.log %}
+        <p>{{ msg }}</p>
+    {% endfor %}
+</div>
+
+<script>
+async function useMove(moveId, moveName) {
+    const res = await fetch(`/battle/move/${moveId}/`);
+    const data = await res.json();
+
+    // 更新 HP 条
+    const playerHpPercent = (data.player_hp / {{ player_pokemon.species.base_hp|add:player_pokemon.level|add:player_pokemon.level }} * 100);
+    const wildHpPercent = (data.wild_hp / {{ wild_pokemon.species.base_hp|add:wild_pokemon.level|add:wild_pokemon.level }} * 100);
+    document.getElementById('player-hp').style.width = Math.max(0, playerHpPercent) + '%';
+    document.getElementById('wild-hp').style.width = Math.max(0, wildHpPercent) + '%';
+
+    // 追加日志
+    const logBox = document.getElementById('battle-log');
+    data.log.forEach(msg => {
+        const p = document.createElement('p');
+        p.textContent = msg;
+        logBox.appendChild(p);
+    });
+    logBox.scrollTop = logBox.scrollHeight;
+
+    if (data.status !== 'ongoing') {
+        setTimeout(() => alert(data.status === 'won' ? '🎉 胜利！' : '💀 失败...'), 500);
+    }
+}
+</script>
+</body>
+</html>
