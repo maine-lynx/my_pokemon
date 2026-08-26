@@ -27,10 +27,12 @@ class OwnedPokemon(models.Model):
     moves = models.ManyToManyField(Move, related_name='users_of_move', blank=True)  # 当前会的4个技能
 
     def save(self, *args, **kwargs):
-        # 新建时自动设置当前HP为满血
-        if not self.pk:
-            self.current_hp = self.species.base_hp + self.level * 2
+        is_new = self.pk is None  # 判断是不是第一次创建
         super().save(*args, **kwargs)
 
+        if is_new:
+            # 创建完成后，自动把物种（Pokemon）会的技能复制给这只个体
+            for move in self.species.moves.all():
+                self.moves.add(move)
     def __str__(self):
         return f"{self.nickname or self.species.name} (Lv.{self.level})"

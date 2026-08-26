@@ -1,5 +1,6 @@
 <!-- battles/templates/battles/battle.html -->
 <!DOCTYPE html>
+{% load static %}   <!-- ← 加在顶部！ -->
 <html>
 <head>
     <title>宝可梦对战</title>
@@ -12,28 +13,27 @@
         .moves { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .move-btn { padding: 10px; border: none; border-radius: 6px; background: #ffcc00; cursor: pointer; }
         .move-btn:hover { background: #ffaa00; }
+        .move-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
+{% csrf_token %}
+
 <div class="battle-field">
     <div class="pokemon-card">
         <h3>{{ player_pokemon.species.name }} Lv.{{ player_pokemon.level }}</h3>
-        <div class="hp-bar"><div class="hp-fill" id="player-hp" style="width: 100%"></div></div>
+        <div class="hp-bar">
+            <div class="hp-fill" id="player-hp" data-max="{{ battle.player_hp }}" style="width: 100%"></div>
+        </div>
         <p>HP: {{ battle.player_hp }}</p>
     </div>
     <div class="pokemon-card">
         <h3>野生 {{ wild_pokemon.species.name }} Lv.{{ wild_pokemon.level }}</h3>
-        <div class="hp-bar"><div class="hp-fill" id="wild-hp" style="width: 100%"></div></div>
+        <div class="hp-bar">
+            <div class="hp-fill" id="wild-hp" data-max="{{ battle.wild_hp }}" style="width: 100%"></div>
+        </div>
         <p>HP: {{ battle.wild_hp }}</p>
     </div>
-</div>
-
-<div class="moves">
-    {% for move in player_pokemon.moves.all %}
-        <button class="move-btn" onclick="useMove({{ move.id }}, '{{ move.name }}')">
-            {{ move.name }} (威力:{{ move.power }})
-        </button>
-    {% endfor %}
 </div>
 
 <div class="log-box" id="battle-log">
@@ -42,30 +42,18 @@
     {% endfor %}
 </div>
 
-<script>
-async function useMove(moveId, moveName) {
-    const res = await fetch(`/battle/move/${moveId}/`);
-    const data = await res.json();
+<div class="moves">
+    {% for move in player_pokemon.moves.all %}
+        <button class="move-btn" onclick="useMove({{ move.id }}, '{{ move.name }}')">
+            <span class="move-name">{{ move.name }}</span>
+            <span class="move-power">威力:{{ move.power }}</span>
+        </button>
+    {% empty %}
+        <p style="color:#999;">这只宝可梦还没学会任何技能…</p>
+    {% endfor %}
+</div>
 
-    // 更新 HP 条
-    const playerHpPercent = (data.player_hp / {{ player_pokemon.species.base_hp|add:player_pokemon.level|add:player_pokemon.level }} * 100);
-    const wildHpPercent = (data.wild_hp / {{ wild_pokemon.species.base_hp|add:wild_pokemon.level|add:wild_pokemon.level }} * 100);
-    document.getElementById('player-hp').style.width = Math.max(0, playerHpPercent) + '%';
-    document.getElementById('wild-hp').style.width = Math.max(0, wildHpPercent) + '%';
-
-    // 追加日志
-    const logBox = document.getElementById('battle-log');
-    data.log.forEach(msg => {
-        const p = document.createElement('p');
-        p.textContent = msg;
-        logBox.appendChild(p);
-    });
-    logBox.scrollTop = logBox.scrollHeight;
-
-    if (data.status !== 'ongoing') {
-        setTimeout(() => alert(data.status === 'won' ? '🎉 胜利！' : '💀 失败...'), 500);
-    }
-}
-</script>
+<!-- 只引入外部 JS，不再写内联脚本 -->
+<script src="{% static 'battles/js/battle.js' %}"></script>
 </body>
 </html>
