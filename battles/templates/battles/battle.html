@@ -20,15 +20,16 @@
 {% csrf_token %}
 
 <div class="battle-field">
+
     <div class="pokemon-card">
         <h3>{{ player_pokemon.species.name }} Lv.{{ player_pokemon.level }}</h3>
         <div class="hp-bar">
-            <div class="hp-fill" id="player-hp" data-max="{{ battle.player_hp }}" style="width: 100%"></div>
+            <div class="hp-fill" id="player-hp" data-max="{{ battle.player_max_hp }}" style="width: 100%"></div>
         </div>
         <p>HP: {{ battle.player_hp }}</p>
     </div>
     <div class="pokemon-card">
-        <h3>野生 {{ wild_pokemon.species.name }} Lv.{{ wild_pokemon.level }}</h3>
+        <h3>野生 {{ wild_species.name }} Lv.{{ battle.wild_level }}</h3>
         <div class="hp-bar">
             <div class="hp-fill" id="wild-hp" data-max="{{ battle.wild_hp }}" style="width: 100%"></div>
         </div>

@@ -11,6 +11,11 @@ function getCookie(name) {
             }
         }
     }
+    // ⚠️ 改动点1：如果 Cookie 里没有，尝试从 {% csrf_token %} 生成的 input 里取（双保险）
+    if (!cookieValue) {
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (input) cookieValue = input.value;
+    }
     return cookieValue;
 }
 
@@ -19,37 +24,68 @@ async function useMove(moveId, moveName) {
     // 1. 禁用所有按钮防连点
     document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
 
-    // 2. 发送 POST 请求（路径对应 urls.py：/battles/move/1/）
-    const res = await fetch(`/battles/move/${moveId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json',
+    // ⚠️ 改动点2：先检查 token 是否存在
+    const token = getCookie('csrftoken');
+    if (!token) {
+        alert('CSRF Token 未找到，请刷新页面！');
+        document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+        return;
+    }
+
+    try { // ⚠️ 改动点3：用 try-catch 包裹，防止请求失败导致按钮卡死
+        // 2. 发送 POST 请求
+        const res = await fetch(`/battles/move/${moveId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': token,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}) // ⚠️ 改动点4：显式传一个空 body，有些 Django 版本需要
+        });
+
+        // ⚠️ 改动点5：检查 HTTP 状态码，如果不是 200 就抛错
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `服务器返回 ${res.status}`);
         }
-    });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    // 3. 更新血条
-    updateHpBar('player-hp', data.player_hp);
-    updateHpBar('wild-hp', data.wild_hp);
+        // ⚠️ 改动点6：如果后端返回了 error 字段（比如战斗已结束），要处理
+        if (data.error) {
+            alert(data.error);
+            document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+            return;
+        }
 
-    // 4. 追加日志
-    const logBox = document.getElementById('battle-log');
-    data.log.forEach(msg => {
-        const p = document.createElement('p');
-        p.textContent = msg;
-        logBox.appendChild(p);
-    });
-    logBox.scrollTop = logBox.scrollHeight;
+        // 3. 更新血条
+        updateHpBar('player-hp', data.player_hp);
+        updateHpBar('wild-hp', data.wild_hp);
 
-    // 5. 战斗结束判断
-    if (data.status !== 'ongoing') {
-        setTimeout(() => {
-            alert(data.status === 'won' ? '🎉 胜利！' : '💀 失败...');
-        }, 500);
-    } else {
-        // 没结束，恢复按钮
+        // 4. 追加日志
+        const logBox = document.getElementById('battle-log');
+        data.log.forEach(msg => {
+            const p = document.createElement('p');
+            p.textContent = msg;
+            logBox.appendChild(p);
+        });
+        logBox.scrollTop = logBox.scrollHeight;
+
+        // 5. 战斗结束判断
+        if (data.status !== 'ongoing') {
+            setTimeout(() => {
+                alert(data.status === 'won' ? '🎉 胜利！' : '💀 失败...');
+            }, 500);
+            // ⚠️ 战斗结束后不用恢复按钮，保持禁用
+        } else {
+            // 没结束，恢复按钮
+            document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+        }
+
+    } catch (error) {
+        // ⚠️ 改动点7：捕获所有错误，弹窗提示，并恢复按钮
+        console.error('请求失败:', error);
+        alert('技能释放失败：' + error.message);
         document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
     }
 }
@@ -58,6 +94,8 @@ async function useMove(moveId, moveName) {
 function updateHpBar(elementId, currentHp) {
     const bar = document.getElementById(elementId);
     const maxHp = parseInt(bar.getAttribute('data-max'));
+    // ⚠️ 改动点8：加个防御，防止 maxHp 是 NaN
+    if (isNaN(maxHp) || maxHp <= 0) return;
     const percent = Math.max(0, (currentHp / maxHp) * 100);
     bar.style.width = percent + '%';
 

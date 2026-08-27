@@ -2,32 +2,44 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from pokedex.models import Pokemon
 from trainers.models import OwnedPokemon
-import random
 
 def start_battle(request, wild_pokemon_id):
     """遭遇野生宝可梦，初始化战斗"""
-    wild = OwnedPokemon.objects.get(id=wild_pokemon_id)
-
+    try:
+        wild_species = Pokemon.objects.get(id=wild_pokemon_id)
+    except Pokemon.DoesNotExist:
+        return HttpResponse("野生宝可梦不存在")
     # 获取当前用户的训练家
     if not hasattr(request.user, 'trainer'):
         return HttpResponse("你的账号没有关联训练师")
+
     player_pokemon = request.user.trainer.pokemons.filter(is_active=True).first()
     if not player_pokemon:
         return HttpResponse("你没有活跃的宝可梦")
-
+    #动态生成野生宝可梦战斗属性
+    wild_level = 5
+    wild_hp = wild_species.base_hp+wild_level*2 #示例公式
     # 把战斗状态存进 session
-    request.session['battle'] = {
+    battle_data = {
         'player_pokemon_id': player_pokemon.id,
-        'wild_pokemon_id': wild.id,
+        'wild_species_id': wild_species.id,
+        'wild_level': wild_level,
+        'wild_name': wild_species.name,
         'player_hp': player_pokemon.current_hp,
-        'wild_hp': wild.current_hp,
-        'player_max_hp': player_pokemon.current_hp,  # ← 新增：记录满血值
-        'wild_max_hp': wild.current_hp,              # ← 新增：记录满血值
+        'wild_hp': wild_hp,
+        'player_max_hp': player_pokemon.current_hp,
+        'wild_max_hp': wild_hp,
         'turn': 'player',
-        'status': 'ongoing',                          # ← 新增：初始状态
-        'log': [f"遭遇了野生的 {wild.species.name}！"],
+        'status': 'ongoing',
+        'log': [f"遭遇了野生的 {wild_species.name}！"],
     }
+
+    # ✅ 关键修改：直接赋值给 session 键，并标记修改
+    request.session['battle'] = battle_data
+    request.session.modified = True
+
     return redirect('battle_view')
 
 
@@ -38,12 +50,12 @@ def battle_view(request):
         return redirect('home')
 
     player_pokemon = OwnedPokemon.objects.get(id=battle['player_pokemon_id'])
-    wild_pokemon = OwnedPokemon.objects.get(id=battle['wild_pokemon_id'])
+    wild_species = Pokemon.objects.get(id=battle['wild_species_id'])
 
     return render(request, 'battles/battle.html', {
         'battle': battle,
         'player_pokemon': player_pokemon,
-        'wild_pokemon': wild_pokemon,
+        'wild_species': wild_species,
     })
 
 
@@ -62,7 +74,7 @@ def use_move(request, move_id):
 
     try:
         player = OwnedPokemon.objects.get(id=battle['player_pokemon_id'])
-        wild = OwnedPokemon.objects.get(id=battle['wild_pokemon_id'])
+        wild = Pokemon.objects.get(id=battle['wild_species_id'])
         move = player.moves.get(id=move_id)  # 如果技能不属于这只宝可梦会抛异常
     except OwnedPokemon.DoesNotExist:
         return JsonResponse({'error': '宝可梦数据异常'}, status=400)
@@ -78,7 +90,7 @@ def use_move(request, move_id):
 
     # 检查野生宝可梦是否倒下
     if battle['wild_hp'] <= 0:
-        log.append(f"野生 {wild.species.name} 倒下了！获得经验值！")
+        log.append(f"野生 {wild.name} 倒下了！获得经验值！")
         battle['status'] = 'won'
         request.session['battle'] = battle
         return JsonResponse({
@@ -89,9 +101,9 @@ def use_move(request, move_id):
         })
 
     # 野生宝可梦反击（简单AI）
-    wild_damage = wild.species.base_attack + wild.level
+    wild_damage = wild.base_attack + battle["wild_level"]
     battle['player_hp'] = max(0, battle['player_hp'] - wild_damage)
-    log.append(f"野生 {wild.species.name} 反击了！造成 {wild_damage} 点伤害！")
+    log.append(f"野生 {wild.name} 反击了！造成 {wild_damage} 点伤害！")
 
     if battle['player_hp'] <= 0:
         log.append(f"{player.species.name} 倒下了！战斗失败...")
