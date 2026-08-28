@@ -71,12 +71,12 @@ async function useMove(moveId, moveName) {
         });
         logBox.scrollTop = logBox.scrollHeight;
 
-        // 5. 战斗结束判断
-        if (data.status !== 'ongoing') {
+        // 5. 战斗结束判断 → 自动进入下一场
+        if (data.status === 'won' || data.status === 'lost') {
+            // 800ms 后跳回 battle_view，后端会自动检测 status≠ongoing 并开始新战斗
             setTimeout(() => {
-                alert(data.status === 'won' ? '🎉 胜利！' : '💀 失败...');
-            }, 500);
-            // ⚠️ 战斗结束后不用恢复按钮，保持禁用
+                window.location.href = '/battles/fight/';
+            }, 800);
         } else {
             // 没结束，恢复按钮
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
