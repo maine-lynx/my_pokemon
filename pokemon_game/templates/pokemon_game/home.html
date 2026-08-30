@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>PokMMO</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 左上角标题 */
+        .title {
+            position: absolute;
+            top: 60px;
+            left: 70px;
+            color: #fff;
+        }
+        .title h1 {
+            font-size: 56px;
+            color: #FFCB05;
+            text-shadow: 4px 4px 0 #3B4CCA;
+            letter-spacing: 3px;
+        }
+        .title p {
+            margin-top: 10px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* 右下角按钮组 */
+        .menu {
+            position: fixed;
+            right: 60px;
+            bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 220px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 19px;
+            font-weight: bold;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.12s, box-shadow 0.2s;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+        }
+        .btn:hover {
+            transform: translateX(-6px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .btn-new    { background: #FFCB05; color: #3B4CCA; }
+        .btn-load   { background: #4CAF50; color: #fff; }
+        .btn-setting{ background: rgba(255,255,255,0.85); color: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="title">
+        <h1>PokMMO</h1>
+        <p>宝可梦多人在线冒险</p>
+    </div>
+
+    <!-- 右下角三个按钮 -->
+    <div class="menu">
+        <!-- ✅ 新游戏 → 跳转到战斗页面 -->
+        <a href="/new-game/" class="btn btn-new">▶ 新游戏</a>
+
+        <!-- 加载游戏 / 设置：暂留空 -->
+        <button class="btn btn-load" onclick="alert('加载游戏功能开发中...')">📁 加载游戏</button>
+        <button class="btn btn-setting" onclick="alert('设置功能开发中...')">⚙ 设置</button>
+    </div>
+
+</body>
+</html>

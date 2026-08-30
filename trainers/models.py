@@ -14,6 +14,10 @@ class Trainer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     #Field字段，相当于python中的属性
     name = models.CharField(max_length=50)
+    #地区
+    region = models.CharField(max_length=50,blank=True)
+    #精灵图片
+    sprite_url = models.URLField(blank=True)
     money = models.IntegerField(default=1000)
     badges = models.IntegerField(default=0)
     #类似python实例方法

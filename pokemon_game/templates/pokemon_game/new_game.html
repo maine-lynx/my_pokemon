@@ -1,0 +1,20 @@
+<!-- 情况1：训练师拥有的宝可梦 -->
+{% if owned_pokemons %}
+    {% for op in owned_pokemons %}
+        <a class="card" href="/battles/{{ op.species.id }}/">
+            <div style="font-size:80px;">{{ op.species.name|first|upper }}</div>
+            <h3>{{ op.nickname }}</h3>
+            <p>#{{ op.species.id }} · Lv.{{ op.level }}</p>
+        </a>
+    {% endfor %}
+
+<!-- 情况2：图鉴前三只 -->
+{% else %}
+    {% for p in starters %}
+        <a class="card" href="/battles/{{ p.id }}/">
+            <div style="font-size:80px;">{{ p.name|first|upper }}</div>
+            <h3>{{ p.name }}</h3>
+            <p>#{{ p.id }}</p>
+        </a>
+    {% endfor %}
+{% endif %}
