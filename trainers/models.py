@@ -29,7 +29,7 @@ class OwnedPokemon(models.Model):
     """训练师拥有的宝可梦个体（有等级、当前HP等）"""
     #多对一关系，关联删除，，支持反向查询trainer.pokemons.all()该训练家的所有宝可梦
     #数据库层面：新建一个triner列作为主键
-    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='pokemons')
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='owned_pokemons')
     #关联到“物种”（Pokemon表 ）
     species = models.ForeignKey(Pokemon, on_delete=models.CASCADE)
     #昵称，可选
@@ -38,8 +38,10 @@ class OwnedPokemon(models.Model):
     level = models.IntegerField(default=5)
     #当前血量，
     current_hp = models.IntegerField()  #为什么没有默认值
-    #经验值
+    #当前经验值
     exp = models.IntegerField(default=0)
+    #升级经验
+    exp_to_next_level = models.IntegerField(default=100)
     # 是否在战斗队伍中（最多6只）
     is_active = models.BooleanField(default=False)
     #数据库层面：新建了一张中间表，用来记录多对多的两边关系，相当于python的一个列表

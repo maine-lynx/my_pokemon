@@ -1,20 +1,92 @@
-<!-- 情况1：训练师拥有的宝可梦 -->
-{% if owned_pokemons %}
-    {% for op in owned_pokemons %}
-        <a class="card" href="/battles/{{ op.species.id }}/">
-            <div style="font-size:80px;">{{ op.species.name|first|upper }}</div>
-            <h3>{{ op.nickname }}</h3>
-            <p>#{{ op.species.id }} · Lv.{{ op.level }}</p>
-        </a>
-    {% endfor %}
+<div style="display: flex; gap: 24px;">
+    <!-- 左侧：宝可梦选择区 -->
+    <div style="flex: 2;">
+        <h2 style="margin-bottom: 16px;">选择你的队伍（最多 6 只）</h2>
 
-<!-- 情况2：图鉴前三只 -->
-{% else %}
-    {% for p in starters %}
-        <a class="card" href="/battles/{{ p.id }}/">
-            <div style="font-size:80px;">{{ p.name|first|upper }}</div>
-            <h3>{{ p.name }}</h3>
-            <p>#{{ p.id }}</p>
+        {% if error %}
+            <p style="color:red; font-weight:bold;">{{ error }}</p>
+        {% endif %}
+
+        <form method="post" id="team-form">
+            {% csrf_token %}
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;" id="card-container">
+                {% for op in owned_pokemons %}
+                    <label class="card" style="cursor: pointer; border: 3px solid transparent; padding: 12px; text-align: center; border-radius: 8px; background: #f9f9f9; width: 140px;">
+                        <input type="checkbox" name="selected_pokemons" value="{{ op.id }}" style="display:none;">
+                        <div style="font-size:80px;">{{ op.species.name|first|upper }}</div>
+                        <h3>{{ op.nickname }}</h3>
+                        <p>#{{ op.species.id }} · Lv.{{ op.level }}</p>
+                    </label>
+                {% empty %}
+                    <p>你还没有宝可梦！请先运行 seed 脚本给训练师灌入数据。</p>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+
+    <!-- 右侧：已选列表与操作区 -->
+    <div style="flex: 1; background: #f1f1f1; padding: 20px; border-radius: 8px; height: fit-content; position: sticky; top: 20px;">
+        <h2>已选队伍 (<span id="selected-count">0</span>/6)</h2>
+        <ul id="selected-list" style="list-style: none; padding: 0; margin-bottom: 24px; min-height: 50px;">
+            <!-- JS 动态插入已选项 -->
+        </ul>
+
+        <!-- 确认选择按钮 -->
+        <button type="submit" form="team-form" style="width: 100%; padding: 12px; font-size: 18px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 12px;">
+            ✅ 确认选择
+        </button>
+
+        <!-- 返回首页按钮（已移到确认选择下方） -->
+        <a href="/" style="display: block; width: 100%; box-sizing: border-box; padding: 10px; text-align: center; background: #666; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">
+            ← 返回首页
         </a>
-    {% endfor %}
-{% endif %}
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            e.preventDefault();
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            const selectedCount = document.querySelectorAll('input[type="checkbox"]:checked').length;
+
+            if (!checkbox.checked && selectedCount >= 6) {
+                alert('队伍最多只能带 6 只宝可梦！');
+                return;
+            }
+
+            checkbox.checked = !checkbox.checked;
+
+            if (checkbox.checked) {
+                this.style.borderColor = '#4CAF50';
+                this.style.backgroundColor = '#e8f5e9';
+            } else {
+                this.style.borderColor = 'transparent';
+                this.style.backgroundColor = '#f9f9f9';
+            }
+
+            updateSelectedList();
+        });
+    });
+
+    function updateSelectedList() {
+        const list = document.getElementById('selected-list');
+        const countSpan = document.getElementById('selected-count');
+        list.innerHTML = '';
+
+        let count = 0;
+        document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+            count++;
+            const card = cb.closest('.card');
+            const name = card.querySelector('h3').innerText;
+            const li = document.createElement('li');
+            li.style.padding = '8px';
+            li.style.borderBottom = '1px solid #ddd';
+            li.innerText = name;
+            list.appendChild(li);
+        });
+
+        countSpan.innerText = count;
+    }
+</script>

@@ -34,7 +34,7 @@ def start_battle(request, wild_pokemon_id):
         return HttpResponse("你的账号没有关联训练师")
     #.filter:类比列表推导式[p for p in pokemons if p.is_active]
     #.first():取第一个
-    player_pokemon = request.user.trainer.pokemons.filter(is_active=True).first()
+    player_pokemon = request.user.trainer.owned_pokemons.filter(is_active=True).first()
     if not player_pokemon:
         return HttpResponse("你没有活跃的宝可梦")
     #动态生成野生宝可梦战斗属性
@@ -84,6 +84,7 @@ def battle_view(request):
     #战斗进行中，正常渲染
     player_pokemon = OwnedPokemon.objects.get(id=battle['player_pokemon_id'])
     wild_species = Pokemon.objects.get(id=battle['wild_species_id'])
+    moves = player_pokemon.moves.all()
     #render类比：
     #   html = template.render（参数）
     #   return html
@@ -91,6 +92,7 @@ def battle_view(request):
         'battle': battle,
         'player_pokemon': player_pokemon,
         'wild_species': wild_species,
+        'moves': moves,
     })
 
 
@@ -124,21 +126,46 @@ def use_move(request, move_id):
 
     log = []
 
-    # 玩家攻击
-    damage = move.power + player.level * 2
+    # ---- 玩家攻击（修复后）----
+    # 类比：宝可梦正统公式的极简版
+    # 伤害 = 威力 × (等级/10)，威力为0则伤害为0
+    if move.power <= 0:
+        damage = 0
+        log.append(f"{player.species.name} 使用了 {move.name}！但是没有效果...")
+    else:
+        # 简单但合理的公式：威力 × 等级系数，至少造成1点伤害
+        damage = max(1, int(move.power * (player.level / 10)))
     battle['wild_hp'] = max(0, battle['wild_hp'] - damage)
     log.append(f"{player.species.name} 使用了 {move.name}！造成 {damage} 点伤害！")
 
     # 检查野生宝可梦是否倒下
     if battle['wild_hp'] <= 0:
         log.append(f"野生 {wild.name} 倒下了！获得经验值！")
+        # ✅ 加经验（根据野生宝可梦等级给）
+        wild_level = battle['wild_level']
+        exp_gain = wild_level * 10  # 比如50级给500经验
+        player.exp += exp_gain
+        log.append(f"{player.species.name} 获得了 {exp_gain} 点经验！")
+
+        # ✅ 检查升级,支持连升多级
+        while player.exp >= player.exp_to_next_level:
+            player.level += 1
+            player.exp -= player.exp_to_next_level
+            player.exp_to_next_level = int(player.exp_to_next_level * 1.5)  # 升级经验递增
+            player.current_hp += 10  # 升级回血
+            log.append(f"🎉 {player.species.name} 升到了 {player.level} 级！")
+
+        player.save()  # ✅ 保存到数据库
         battle['status'] = 'won'
         request.session['battle'] = battle  #写回session
         return JsonResponse({
             'log': log,
             'player_hp': battle['player_hp'],   # ← 补上！之前漏了
             'wild_hp': 0,
-            'status': 'won'
+            'status': 'won',
+            'player_exp': player.exp,
+            'exp_to_next': player.exp_to_next_level,
+            'player_level': player.level,
         })
 
     # 野生宝可梦反击（简单AI）

@@ -1,60 +1,237 @@
-<!-- battles/templates/battles/battle.html -->
 <!DOCTYPE html>
-{% load static %}   <!-- ← 加在顶部！ -->
-<html>
+<html lang="zh">
 <head>
-    <title>宝可梦对战</title>
+    <meta charset="UTF-8">
+    <title>战斗！</title>
     <style>
-        .battle-field { display: flex; justify-content: space-between; padding: 20px; }
-        .pokemon-card { border: 2px solid #333; border-radius: 10px; padding: 15px; width: 200px; }
-        .hp-bar { height: 12px; background: #ddd; border-radius: 6px; overflow: hidden; }
-        .hp-fill { height: 100%; background: linear-gradient(90deg, #4caf50, #8bc34a); transition: width 0.5s; }
-        .log-box { margin-top: 20px; padding: 10px; background: #f5f5f5; border-radius: 8px; height: 120px; overflow-y: auto; }
-        .moves { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .move-btn { padding: 10px; border: none; border-radius: 6px; background: #ffcc00; cursor: pointer; }
-        .move-btn:hover { background: #ffaa00; }
-        .move-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        body { font-family: "Microsoft YaHei", Arial, sans-serif; margin: 20px; background: #fafafa; }
+        .battle-area { display: flex; justify-content: space-between; margin-bottom: 20px; gap: 40px; }
+        .pokemon-card {
+            border: 2px solid #333; padding: 16px; border-radius: 12px;
+            width: 240px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .hp-bar { background: #ddd; height: 14px; border-radius: 7px; margin: 8px 0; overflow: hidden; }
+        .hp-fill { background: #4CAF50; height: 100%; transition: width 0.3s; }
+        .exp-bar { background: #eee; height: 8px; border-radius: 4px; margin: 6px 0; overflow: hidden; }
+        .exp-fill { background: #2196F3; height: 100%; transition: width 0.3s; }
+        .log {
+            background: #111; color: #0f0; padding: 16px; border-radius: 8px;
+            margin-bottom: 20px; max-height: 180px; overflow-y: auto;
+            font-family: monospace; font-size: 14px;
+        }
+        .menu-buttons { display: flex; gap: 12px; margin-bottom: 12px; }
+        .menu-buttons button {
+            flex: 1; padding: 14px; font-size: 16px; cursor: pointer;
+            border: 2px solid #333; border-radius: 8px; background: white;
+        }
+        .menu-buttons button:hover { background: #eee; }
+        .moves-panel {
+            display: none;
+            gap: 10px; flex-wrap: wrap; margin-top: 12px;
+        }
+        .moves-panel button {
+            padding: 12px 20px; font-size: 15px; cursor: pointer;
+            border: 2px solid #4CAF50; border-radius: 8px; background: #e8f5e9;
+        }
     </style>
 </head>
 <body>
-{% csrf_token %}
+    <h1>⚔️ 野生宝可梦出现了！</h1>
 
-<div class="battle-field">
-
-    <div class="pokemon-card">
-        <h3>{{ player_pokemon.species.name }} Lv.{{ player_pokemon.level }}</h3>
-        <div class="hp-bar">
-            <div class="hp-fill" id="player-hp" data-max="{{ battle.player_max_hp }}" style="width: 100%"></div>
+    <div class="battle-area">
+        <!-- 我方宝可梦 -->
+        <div class="pokemon-card">
+            <h3 id="player-level">{{ player_pokemon.nickname }} (Lv.{{ player_pokemon.level }})</h3>
+            <p>HP: <span id="player-hp-text">{{ battle.player_hp }}</span> / {{ battle.player_max_hp }}</p>
+            <!-- ✅ 加了 id 和 data-max -->
+            <div class="hp-bar">
+                <div id="player-hp" class="hp-fill" data-max="{{ battle.player_max_hp }}" style="width:{% widthratio battle.player_hp battle.player_max_hp 100 %}%"></div>
+            </div>
+            <p style="font-size:12px; margin:4px 0;">
+                <span id="exp-text">EXP: {{ player_pokemon.exp }} / {{ player_pokemon.exp_to_next_level }}</span>
+            </p>
+            <!-- ✅ 加了 id -->
+            <div class="exp-bar">
+                <div id="exp-fill" class="exp-fill" style="width:{% widthratio player_pokemon.exp player_pokemon.exp_to_next_level 100 %}%"></div>
+            </div>
         </div>
-        <p>HP: {{ battle.player_hp }}</p>
-    </div>
-    <div class="pokemon-card">
-        <h3>野生 {{ wild_species.name }} Lv.{{ battle.wild_level }}</h3>
-        <div class="hp-bar">
-            <div class="hp-fill" id="wild-hp" data-max="{{ battle.wild_hp }}" style="width: 100%"></div>
+
+        <!-- 野生宝可梦 -->
+        <div class="pokemon-card">
+            <h3>野生 {{ wild_species.name }} (Lv.{{ battle.wild_level }})</h3>
+            <p>HP: {{ battle.wild_hp }} / {{ battle.wild_max_hp }}</p>
+            <!-- ✅ 加了 id 和 data-max -->
+            <div class="hp-bar">
+                <div id="wild-hp" class="hp-fill" data-max="{{ battle.wild_max_hp }}" style="width:{% widthratio battle.wild_hp battle.wild_max_hp 100 %}%"></div>
+            </div>
         </div>
-        <p>HP: {{ battle.wild_hp }}</p>
     </div>
-</div>
 
-<div class="log-box" id="battle-log">
-    {% for msg in battle.log %}
-        <p>{{ msg }}</p>
-    {% endfor %}
-</div>
+    <!-- 战斗日志 -->
+    <div class="log" id="battle-log">
+        {% for line in battle.log %}
+            <div>{{ line }}</div>
+        {% endfor %}
+    </div>
 
-<div class="moves">
-    {% for move in player_pokemon.moves.all %}
-        <button class="move-btn" onclick="useMove({{ move.id }}, '{{ move.name }}')">
-            <span class="move-name">{{ move.name }}</span>
-            <span class="move-power">威力:{{ move.power }}</span>
-        </button>
-    {% empty %}
-        <p style="color:#999;">这只宝可梦还没学会任何技能…</p>
-    {% endfor %}
-</div>
+    <!-- 底部四个菜单按钮 -->
+    <div class="menu-buttons">
+        <button onclick="showMoves()">⚔️ 战斗</button>
+        <button onclick="alert('背包功能待开发')">🎒 背包</button>
+        <button onclick="alert('宝可梦列表待开发')">📋 宝可梦</button>
+        <button onclick="alert('逃跑成功！')">🏃 逃跑</button>
+    </div>
 
-<!-- 只引入外部 JS，不再写内联脚本 -->
-<script src="{% static 'battles/js/battle.js' %}"></script>
+    <!-- 技能选择面板 -->
+    <div class="moves-panel" id="moves-panel">
+        {% for move in moves %}
+            <!-- ✅ 加了 class="move-btn" -->
+            <button class="move-btn" onclick="useMove({{ move.id }}, '{{ move.name }}')">
+                {{ move.name }}<br>
+                <small>威力: {{ move.power }}</small>
+            </button>
+        {% endfor %}
+    </div>
+
+    {% csrf_token %}
+
+    <!-- ✅ 完整 JS（替换你原来的 script） -->
+    <script>
+        // ========== CSRF ==========
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + value + expires + "; path=/";
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            if (!cookieValue) {
+                const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+                if (input) {
+                    cookieValue = input.value;
+                    setCookie('csrftoken', cookieValue, 1);
+                }
+            }
+            return cookieValue;
+        }
+
+        // ========== 显示/隐藏技能面板 ==========
+        function showMoves() {
+            const panel = document.getElementById('moves-panel');
+            panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        // ========== 使用技能 ==========
+        async function useMove(moveId, moveName) {
+            document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
+
+            const token = getCookie('csrftoken');
+            if (!token) {
+                alert('CSRF Token 未找到，请刷新页面！');
+                document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+                return;
+            }
+
+            try {
+                const res = await fetch(`/battles/move/${moveId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': token,
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({})
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `服务器返回 ${res.status}`);
+                }
+
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+                    return;
+                }
+
+                // 更新血条
+                updateHpBar('player-hp', data.player_hp);
+                updateHpBar('wild-hp', data.wild_hp);
+
+                // 追加日志
+                const logBox = document.getElementById('battle-log');
+                data.log.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.textContent = msg;
+                    logBox.appendChild(div);
+                });
+                logBox.scrollTop = logBox.scrollHeight;
+
+                // 更新经验条
+                if (data.player_exp !== undefined && data.exp_to_next !== undefined) {
+                    const expFill = document.getElementById('exp-fill');
+                    const expText = document.getElementById('exp-text');
+                    const pct = Math.min(100, (data.player_exp / data.exp_to_next * 100).toFixed(1));
+                    if (expFill) expFill.style.width = pct + '%';
+                    if (expText) expText.textContent = `EXP: ${data.player_exp} / ${data.exp_to_next}`;
+                }
+                if (data.player_level !== undefined) {
+                    const lvlText = document.getElementById('player-level');
+                    if (lvlText) lvlText.textContent = `${data.player_level}`;
+                }
+
+                // 战斗结束
+                if (data.status === 'won' || data.status === 'lost') {
+                    const panel = document.getElementById('moves-panel');
+                    if (panel) panel.style.display = 'none';
+                    setTimeout(() => {
+                        window.location.href = '/battles/fight/';
+                    }, 1500);
+                } else {
+                    document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+                }
+
+            } catch (error) {
+                console.error('请求失败:', error);
+                alert('技能释放失败：' + error.message);
+                document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+            }
+        }
+
+        // ========== 更新血条 ==========
+        function updateHpBar(elementId, currentHp) {
+            const bar = document.getElementById(elementId);
+            if (!bar) return;
+            const maxHp = parseInt(bar.getAttribute('data-max'));
+            if (isNaN(maxHp) || maxHp <= 0) return;
+            const percent = Math.max(0, (currentHp / maxHp) * 100);
+            bar.style.width = percent + '%';
+
+            if (percent > 50) {
+                bar.style.background = 'linear-gradient(90deg, #4caf50, #8bc34a)';
+            } else if (percent > 20) {
+                bar.style.background = 'linear-gradient(90deg, #ff9800, #ffc107)';
+            } else {
+                bar.style.background = 'linear-gradient(90deg, #f44336, #ef5350)';
+            }
+        }
+    </script>
 </body>
 </html>

@@ -1,4 +1,16 @@
-// 获取 Django CSRF Token 的辅助函数
+// ========== CSRF Token 获取 ==========
+
+// ✅ 必须有：设置 Cookie 的辅助函数
+function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + value + expires + "; path=/";
+}
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -11,20 +23,29 @@ function getCookie(name) {
             }
         }
     }
-    // ⚠️ 改动点1：如果 Cookie 里没有，尝试从 {% csrf_token %} 生成的 input 里取（双保险）
+    // ✅ 改动：如果 cookie 里没有，从 input 取，并写入 cookie
     if (!cookieValue) {
         const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
-        if (input) cookieValue = input.value;
+        if (input) {
+            cookieValue = input.value;
+            setCookie('csrftoken', cookieValue, 1); // 写入 cookie，有效期1天
+        }
     }
     return cookieValue;
 }
 
-// 使用技能的主函数
+// ========== 控制技能面板显示/隐藏 ==========
+function showMoves() {
+    const panel = document.getElementById('moves-panel');
+    if (panel) {
+        panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
+    }
+}
+
+// ========== 使用技能 ==========
 async function useMove(moveId, moveName) {
-    // 1. 禁用所有按钮防连点
     document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
 
-    // ⚠️ 改动点2：先检查 token 是否存在
     const token = getCookie('csrftoken');
     if (!token) {
         alert('CSRF Token 未找到，请刷新页面！');
@@ -32,18 +53,17 @@ async function useMove(moveId, moveName) {
         return;
     }
 
-    try { // ⚠️ 改动点3：用 try-catch 包裹，防止请求失败导致按钮卡死
-        // 2. 发送 POST 请求
+    try {
         const res = await fetch(`/battles/move/${moveId}/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': token,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({}) // ⚠️ 改动点4：显式传一个空 body，有些 Django 版本需要
+            credentials: 'same-origin', // ✅ 必须有：确保携带同源 cookie
+            body: JSON.stringify({})
         });
 
-        // ⚠️ 改动点5：检查 HTTP 状态码，如果不是 200 就抛错
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || `服务器返回 ${res.status}`);
@@ -51,50 +71,64 @@ async function useMove(moveId, moveName) {
 
         const data = await res.json();
 
-        // ⚠️ 改动点6：如果后端返回了 error 字段（比如战斗已结束），要处理
         if (data.error) {
             alert(data.error);
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
             return;
         }
 
-        // 3. 更新血条
+        // ---- 更新血条 ----
         updateHpBar('player-hp', data.player_hp);
         updateHpBar('wild-hp', data.wild_hp);
 
-        // 4. 追加日志
+        // ---- 追加日志 ----
         const logBox = document.getElementById('battle-log');
-        data.log.forEach(msg => {
-            const p = document.createElement('p');
-            p.textContent = msg;
-            logBox.appendChild(p);
-        });
-        logBox.scrollTop = logBox.scrollHeight;
+        if (logBox) {
+            data.log.forEach(msg => {
+                const p = document.createElement('p');
+                p.textContent = msg;
+                logBox.appendChild(p);
+            });
+            logBox.scrollTop = logBox.scrollHeight;
+        }
 
-        // 5. 战斗结束判断 → 自动进入下一场
+        // ---- ✅ 更新经验条和等级 ----
+        if (data.player_exp !== undefined && data.exp_to_next !== undefined) {
+            const expFill = document.getElementById('exp-fill');
+            const expText = document.getElementById('exp-text');
+            const pct = Math.min(100, (data.player_exp / data.exp_to_next * 100).toFixed(1));
+            if (expFill) expFill.style.width = pct + '%';
+            if (expText) expText.textContent = `EXP: ${data.player_exp} / ${data.exp_to_next}`;
+        }
+        if (data.player_level !== undefined) {
+            const lvlText = document.getElementById('player-level');
+            if (lvlText) lvlText.textContent = `Lv.${data.player_level}`;
+        }
+
+        // ---- 战斗结束判断 ----
         if (data.status === 'won' || data.status === 'lost') {
-            // 800ms 后跳回 battle_view，后端会自动检测 status≠ongoing 并开始新战斗
+            const panel = document.getElementById('moves-panel');
+            if (panel) panel.style.display = 'none';
+
             setTimeout(() => {
                 window.location.href = '/battles/fight/';
-            }, 800);
+            }, 1500);
         } else {
-            // 没结束，恢复按钮
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
         }
 
     } catch (error) {
-        // ⚠️ 改动点7：捕获所有错误，弹窗提示，并恢复按钮
         console.error('请求失败:', error);
         alert('技能释放失败：' + error.message);
         document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
     }
 }
 
-// 更新血条颜色和宽度
+// ========== 更新血条 ==========
 function updateHpBar(elementId, currentHp) {
     const bar = document.getElementById(elementId);
+    if (!bar) return;
     const maxHp = parseInt(bar.getAttribute('data-max'));
-    // ⚠️ 改动点8：加个防御，防止 maxHp 是 NaN
     if (isNaN(maxHp) || maxHp <= 0) return;
     const percent = Math.max(0, (currentHp / maxHp) * 100);
     bar.style.width = percent + '%';
