@@ -14,7 +14,6 @@ from pathlib import Path
 #导入decouple设置敏感环境
 from decouple import config
 
-import pokemon_game
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -48,7 +47,6 @@ INSTALLED_APPS = [
     "pokedex",
     "trainers",
     "world",
-    "pokemon_game",
 ]
 
 MIDDLEWARE = [
@@ -67,7 +65,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
