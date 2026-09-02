@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST
 #require_POST:类比装饰器，相当于if require.method != "POST":return error
 from pokedex.models import Pokemon
 from trainers.models import OwnedPokemon
+from items.models import TrainerItem
 
 #一个接受请求对象，返回响应对象的函数
 def start_battle(request, wild_pokemon_id):
@@ -85,6 +86,13 @@ def battle_view(request):
     player_pokemon = OwnedPokemon.objects.get(id=battle['player_pokemon_id'])
     wild_species = Pokemon.objects.get(id=battle['wild_species_id'])
     moves = player_pokemon.moves.all()
+
+    trainer_items = []
+    if hasattr(request.user, 'trainer'):
+        trainer_items = TrainerItem.objects.filter(
+            trainer=request.user.trainer, quantity__gt=0
+        ).select_related('item')
+
     #render类比：
     #   html = template.render（参数）
     #   return html
@@ -93,6 +101,7 @@ def battle_view(request):
         'player_pokemon': player_pokemon,
         'wild_species': wild_species,
         'moves': moves,
+        'trainer_items': trainer_items,
     })
 
 

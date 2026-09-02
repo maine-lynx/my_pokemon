@@ -26,4 +26,5 @@ urlpatterns = [
     path("battles/", include("battles.urls")),#战斗相关
     # path("trainers/", include("trainers.urls")),#训练师相关
     path("",include("trainers.urls")),
+    path("items/", include("items.urls")),#物品相关
 ]

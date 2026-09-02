@@ -37,11 +37,93 @@ function getCookie(name) {
 // ========== 控制技能面板显示/隐藏 ==========
 function showMoves() {
     const panel = document.getElementById('moves-panel');
+    const itemsPanel = document.getElementById('items-panel');
+    if (itemsPanel) {
+        itemsPanel.style.display = 'none';
+    }
+
+    if (panel) {
+        panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
+    }
+}
+// ========== 控制道具面板显示/隐藏 ==========
+function showItems() {
+    const panel = document.getElementById('items-panel');
+    const movesPanel = document.getElementById('moves-panel');
+    if (movesPanel) {
+        movesPanel.style.display = 'none';
+    }
+
     if (panel) {
         panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
     }
 }
 
+//===============使用道具================
+async function useItem(itemId, itemName) {
+    document.querySelectorAll('.item-btn').forEach(btn => btn.disabled = true);
+    const token = getCookie('csrftoken');
+    if (!token) {
+        alert('CSRF Token 未找到，请刷新页面！');
+        document.querySelectorAll('.item-use-btn').forEach(btn => btn.disabled = false);
+        return;
+    }
+
+    try {
+        const res = await fetch(`/items/use/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': token,
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({})
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `服务器返回 ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (data.error) {
+            alert(data.error);
+            document.querySelectorAll('.item-use-btn').forEach(btn => btn.disabled = false);
+            return;
+        }
+
+        updateHpBar('player-hp', data.player_hp);
+        updateHpBar('wild-hp', data.wild_hp);
+
+        const logBox = document.getElementById('battle-log');
+        if (logBox) {
+            data.log.forEach(msg => {
+                const p = document.createElement('p');
+                p.textContent = msg;
+                logBox.appendChild(p);
+            });
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        if (data.status === 'won' || data.status === 'lost' || data.status === 'caught') {
+            const itemsPanel = document.getElementById('items-panel');
+            if (itemsPanel) itemsPanel.style.display = 'none';
+            setTimeout(() => {
+                window.location.href = '/battles/fight/';
+            }, 1500);
+        } else {
+            document.querySelectorAll('.item-use-btn').forEach(btn => btn.disabled = false);
+        }
+
+    } catch (error) {
+        console.error('道具使用失败:', error);
+        alert('道具使用失败：' + error.message);
+        document.querySelectorAll('.item-use-btn').forEach(btn => btn.disabled = false);
+    }
+}
+
+// ... existing code ...
 // ========== 使用技能 ==========
 async function useMove(moveId, moveName) {
     document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
