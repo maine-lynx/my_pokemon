@@ -1,0 +1,54 @@
+# ===== Ruff 配置 =====
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+src = ["battles", "items", "pokedex", "trainers", "world", "config"]
+exclude = [
+    "migrations",
+    ".venv",
+    ".git",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes (未使用导入/变量等)
+    "I",    # isort (导入排序)
+    "N",    # pep8-naming
+    "UP",   # pyupgrade (现代语法)
+    "B",    # flake8-bugbear (常见 bug 模式)
+    "SIM",  # flake8-simplify (简化写法)
+]
+ignore = [
+    "E501",  # 行长度交给 formatter 管
+    "N802",  # Django view 函数名允许小写
+    "N803",  # 允许中文变量名（如有）
+    "N806",  # 同上
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["battles", "items", "pokedex", "trainers", "world", "config"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/**" = ["E501", "F401"]
+"manage.py" = ["E402"]
+
+
+# ===== Mypy 配置 =====
+[tool.mypy]
+python_version = "3.13"
+plugins = ["mypy_django_plugin.main"]
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+exclude = [
+    "migrations/",
+    ".venv/",
+    "manage.py",
+]
+
+[tool.django-stubs]
+django_settings_module = "config.settings"

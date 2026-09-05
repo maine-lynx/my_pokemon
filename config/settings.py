@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
-#导入decouple设置敏感环境
-from decouple import config
 
+# 导入decouple设置敏感环境
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,10 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')   #密钥添加到.env文件中，不上传
+SECRET_KEY = config("SECRET_KEY")  # 密钥添加到.env文件中，不上传
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = []
 
@@ -40,9 +40,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    #my app
-    "battles",#必须加逗号，否者会被自动合并成同一个字符串连接
+    # my app
+    "battles",  # 必须加逗号，否者会被自动合并成同一个字符串连接
     "items",
     "pokedex",
     "trainers",
@@ -76,7 +75,6 @@ TEMPLATES = [
         },
     },
 ]
-
 
 
 # Database

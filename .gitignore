@@ -26,8 +26,15 @@ db.sqlite3
 .DS_Store
 Thumbs.db
 
-# 静态文件收集目录（让克隆者自己 collectstatic）git
+# 静态文件收集目录（让克隆者自己 collectstatic）
 staticfiles/
 
 # 用户上传的媒体文件
 media/
+
+# ===== 开发工具缓存 =====
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.pytest_cache/

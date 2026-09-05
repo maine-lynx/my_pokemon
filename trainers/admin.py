@@ -1,8 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from django.contrib import admin
-from .models import Trainer, OwnedPokemon
+from .models import OwnedPokemon, Trainer
 
 admin.site.register(Trainer)
 admin.site.register(OwnedPokemon)

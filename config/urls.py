@@ -16,15 +16,15 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import include, path
 from django.views.generic.base import TemplateView
 
 urlpatterns = [
-    path('',TemplateView.as_view(template_name='home.html'),name='home'),
+    path("", TemplateView.as_view(template_name="home.html"), name="home"),
     path("admin/", admin.site.urls),
-    path("pokedex/", include("pokedex.urls")),#图鉴
-    path("battles/", include("battles.urls")),#战斗相关
+    path("pokedex/", include("pokedex.urls")),  # 图鉴
+    path("battles/", include("battles.urls")),  # 战斗相关
     # path("trainers/", include("trainers.urls")),#训练师相关
-    path("",include("trainers.urls")),
-    path("items/", include("items.urls")),#物品相关
+    path("", include("trainers.urls")),
+    path("items/", include("items.urls")),  # 物品相关
 ]

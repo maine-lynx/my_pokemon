@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from django.contrib import admin
-from .models import Type, Move, Pokemon
+from .models import Move, Pokemon, Type
+
 # Register your models here.
 
 admin.site.register(Type)
