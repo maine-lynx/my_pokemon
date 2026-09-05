@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>PokMMO - 注册</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        @keyframes gradientBG {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 40px;
+            width: 380px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .register-card h1 {
+            font-size: 36px;
+            color: #FFCB05;
+            text-shadow: 2px 2px 0 #3B4CCA;
+            margin-bottom: 8px;
+        }
+        .register-card p.subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .register-card input {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .register-card input:focus {
+            border-color: #3B4CCA;
+        }
+        .register-card button {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background: #4CAF50;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .register-card button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+        }
+        .error-msg {
+            color: #e53935;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .switch-link {
+            margin-top: 18px;
+            font-size: 14px;
+            color: #666;
+        }
+        .switch-link a {
+            color: #3B4CCA;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .switch-link a:hover {
+            text-decoration: underline;
+        }
+        .gift-info {
+            background: #fff3e0;
+            border: 1px solid #FFB74D;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-card">
+        <h1>PokMMO</h1>
+        <p class="subtitle">创建你的训练师账号</p>
+
+        <div class="gift-info">
+            🎁 注册即送 3 只初始宝可梦：妙蛙种子、小火龙、杰尼龟！
+        </div>
+
+        {% if error %}
+            <p class="error-msg">{{ error }}</p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="用户名" required autofocus>
+            <input type="password" name="password" placeholder="密码" required>
+            <input type="password" name="password2" placeholder="确认密码" required>
+            <button type="submit">🎁 注册并开始冒险</button>
+        </form>
+
+        <p class="switch-link">
+            已有账号？<a href="{% url 'login' %}">返回登录</a>
+        </p>
+    </div>
+</body>
+</html>
