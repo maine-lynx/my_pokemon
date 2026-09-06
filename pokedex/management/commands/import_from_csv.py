@@ -13,6 +13,9 @@ def prettify(identifier):
     return " ".join(word.capitalize() for word in identifier.split("-"))
 
 
+POKEAPI_SPRITE_BASE = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{id}.png"
+
+
 class Command(BaseCommand):
     help = "从 PokéAPI 的 CSV 文件批量导入图鉴数据"
 
@@ -76,9 +79,10 @@ class Command(BaseCommand):
         with open(pokemon_path, encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
+                pid = int(row["id"])
                 pokemons.append(
                     Pokemon(
-                        pokemon_id=int(row["id"]),
+                        pokemon_id=pid,
                         species_id=int(row.get("species_id") or 0),
                         name=prettify(row["identifier"]),
                         height=int(row.get("height") or 0),
@@ -88,6 +92,7 @@ class Command(BaseCommand):
                         base_attack=50,
                         base_defense=50,
                         base_speed=50,
+                        sprite_url=POKEAPI_SPRITE_BASE.format(id=pid),
                     )
                 )
         Pokemon.objects.bulk_create(pokemons, ignore_conflicts=True)

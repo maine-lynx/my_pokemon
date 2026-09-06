@@ -10,6 +10,16 @@
         .pokemon-card {
             border: 2px solid #333; padding: 16px; border-radius: 12px;
             width: 240px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        pokemon-sprite {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+        .pokemon-sprite.wild {
+            transform: scaleX(-1);
         }
         .hp-bar { background: #ddd; height: 14px; border-radius: 7px; margin: 8px 0; overflow: hidden; }
         .hp-fill { background: #4CAF50; height: 100%; transition: width 0.3s; }
@@ -43,6 +53,9 @@
         <!-- 我方宝可梦 -->
         <div class="pokemon-card">
             <h3 id="player-level">{{ player_pokemon.nickname }} (Lv.{{ player_pokemon.level }})</h3>
+            {% if player_pokemon.species.sprite_url %}
+                <img class="pokemon-sprite" src="{{ player_pokemon.species.sprite_url }}" alt="{{ player_pokemon.species.name }}">
+            {% endif %}
             <p>HP: <span id="player-hp-text">{{ battle.player_hp }}</span> / {{ battle.player_max_hp }}</p>
             <!-- ✅ 加了 id 和 data-max -->
             <div class="hp-bar">
@@ -60,6 +73,9 @@
         <!-- 野生宝可梦 -->
         <div class="pokemon-card">
             <h3>野生 {{ wild_species.name }} (Lv.{{ battle.wild_level }})</h3>
+             {% if wild_species.sprite_url %}
+                <img class="pokemon-sprite wild" src="{{ wild_species.sprite_url }}" alt="{{ wild_species.name }}">
+            {% endif %}
             <p>HP: {{ battle.wild_hp }} / {{ battle.wild_max_hp }}</p>
             <!-- ✅ 加了 id 和 data-max -->
             <div class="hp-bar">
