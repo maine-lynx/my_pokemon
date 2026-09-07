@@ -73,6 +73,7 @@
         .btn-new    { background: #FFCB05; color: #3B4CCA; }
         .btn-load   { background: #4CAF50; color: #fff; }
         .btn-setting{ background: rgba(255,255,255,0.85); color: #333; }
+        .btn-logout { background: #e53935; color: #fff; }
     </style>
 </head>
 <body>
@@ -82,14 +83,19 @@
         <p>宝可梦多人在线冒险</p>
     </div>
 
-    <!-- 右下角三个按钮 -->
+    <!-- 左上角显示当前用户 -->
+    <div style="position: absolute; top: 20px; right: 30px; color: #fff; font-size: 14px;">
+        🎮 {{ request.user.username }}
+    </div>
+    <!-- 右下角按钮组 -->
     <div class="menu">
-        <!-- ✅ 新游戏 → 跳转到战斗页面 -->
         <a href="/new-game/" class="btn btn-new">▶ 新游戏</a>
-
-        <!-- 加载游戏 / 设置：暂留空 -->
         <button class="btn btn-load" onclick="alert('加载游戏功能开发中...')">📁 加载游戏</button>
         <button class="btn btn-setting" onclick="alert('设置功能开发中...')">⚙ 设置</button>
+        <form method="post" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-logout">🚪 退出登录</button>
+        </form>
     </div>
 
 </body>
