@@ -20,10 +20,6 @@
         }
         .pokemon-sprite.wild {
             transform: scaleX(-1);
-            <button onclick="showMoves()">⚔️ 战斗</button>
-            <button onclick="showItems()">🎒 背包</button>
-            <button onclick="showTeam()">📋 宝可梦</button>
-            <button onclick="alert('逃跑成功！')">🏃 逃跑</button>
         }
         .hp-bar { background: #ddd; height: 14px; border-radius: 7px; margin: 8px 0; overflow: hidden; }
         .hp-fill { background: #4CAF50; height: 100%; transition: width 0.3s; }
@@ -52,7 +48,7 @@
             display: none;
             gap: 10px; flex-wrap: wrap; margin-top: 12px;
         }
-         .team-card {
+        .team-card {
             border: 2px solid #2196F3; border-radius: 10px; padding: 10px;
             width: 140px; text-align: center; cursor: pointer;
             background: #e3f2fd; transition: transform 0.1s;
@@ -66,59 +62,52 @@
     <h1>⚔️ 野生宝可梦出现了！</h1>
 
     <div class="battle-area">
-        <!-- 我方宝可梦 -->
         <div class="pokemon-card">
-            <h3 id="player-level">{{ player_pokemon.nickname }} (Lv.{{ player_pokemon.level }})</h3>
+            <h3 id="player-level">{{ player_pokemon.species.name }} (Lv.{{ player_pokemon.level }})</h3>
             {% if player_pokemon.species.sprite_url %}
-                <img class="pokemon-sprite" src="{{ player_pokemon.species.sprite_url }}" alt="{{ player_pokemon.species.name }}">
+                <img class="pokemon-sprite" src="{{ player_pokemon.species.sprite_url }}" alt="{{ player_pokemon.species.name }}"
+                     onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
             {% endif %}
             <p>HP: <span id="player-hp-text">{{ battle.player_hp }}</span> / {{ battle.player_max_hp }}</p>
-            <!-- ✅ 加了 id 和 data-max -->
             <div class="hp-bar">
                 <div id="player-hp" class="hp-fill" data-max="{{ battle.player_max_hp }}" style="width:{% widthratio battle.player_hp battle.player_max_hp 100 %}%"></div>
             </div>
             <p style="font-size:12px; margin:4px 0;">
                 <span id="exp-text">EXP: {{ player_pokemon.exp }} / {{ player_pokemon.exp_to_next_level }}</span>
             </p>
-            <!-- ✅ 加了 id -->
             <div class="exp-bar">
                 <div id="exp-fill" class="exp-fill" style="width:{% widthratio player_pokemon.exp player_pokemon.exp_to_next_level 100 %}%"></div>
             </div>
         </div>
 
-        <!-- 野生宝可梦 -->
         <div class="pokemon-card">
             <h3>野生 {{ wild_species.name }} (Lv.{{ battle.wild_level }})</h3>
-             {% if wild_species.sprite_url %}
-                <img class="pokemon-sprite wild" src="{{ wild_species.sprite_url }}" alt="{{ wild_species.name }}">
+            {% if wild_species.sprite_url %}
+                <img class="pokemon-sprite wild" src="{{ wild_species.sprite_url }}" alt="{{ wild_species.name }}"
+                     onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
             {% endif %}
             <p>HP: {{ battle.wild_hp }} / {{ battle.wild_max_hp }}</p>
-            <!-- ✅ 加了 id 和 data-max -->
             <div class="hp-bar">
                 <div id="wild-hp" class="hp-fill" data-max="{{ battle.wild_max_hp }}" style="width:{% widthratio battle.wild_hp battle.wild_max_hp 100 %}%"></div>
             </div>
         </div>
     </div>
 
-    <!-- 战斗日志 -->
     <div class="log" id="battle-log">
         {% for line in battle.log %}
             <div>{{ line }}</div>
         {% endfor %}
     </div>
 
-    <!-- 底部四个菜单按钮 -->
     <div class="menu-buttons">
         <button onclick="showMoves()">⚔️ 战斗</button>
-        <button onclick="showItems()">🎒 背包</button>
+        <button onclick="showItems()"> 背包</button>
         <button onclick="showTeam()">📋 宝可梦</button>
         <button onclick="alert('逃跑成功！')">🏃 逃跑</button>
     </div>
 
-    <!-- 技能选择面板 -->
     <div class="moves-panel" id="moves-panel">
         {% for move in moves %}
-            <!-- ✅ 加了 class="move-btn" -->
             <button class="move-btn" onclick="useMove({{ move.id }}, '{{ move.name }}')">
                 {{ move.name }}<br>
                 <small>威力: {{ move.power }}</small>
@@ -126,8 +115,7 @@
         {% endfor %}
     </div>
 
-        <!-- 道具选择面板 -->
-    <div class="moves-panel" id="items-panel" style="border-color: #FF9800;">
+    <div class="moves-panel" id="items-panel">
         {% for ti in trainer_items %}
             <button class="item-use-btn" onclick="useItem({{ ti.item.id }}, '{{ ti.item.name }}')">
                 {{ ti.item.icon }} {{ ti.item.name }}<br>
@@ -137,24 +125,24 @@
             <p style="color:#999;">背包空空如也...</p>
         {% endfor %}
     </div>
-    <!-- 宝可梦切换面板 -->
+
     <div class="team-panel" id="team-panel">
         {% for op in team %}
             <div class="team-card {% if op.current_hp <= 0 %}fainted{% endif %}"
                  onclick="{% if op.current_hp > 0 %}switchPokemon({{ op.id }}){% else %}alert('这只宝可梦已经倒下了！'){% endif %}">
                 {% if op.species.sprite_url %}
-                    <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}">
+                    <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}"
+                         onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png'">
                 {% endif %}
-                <h4>{{ op.nickname|default:op.species.name }}</h4>
-                <p style="font-size:12px;">Lv.{{ op.level }} | HP: {{ op.current_hp }}/{{ op.current_hp }}</p>
+                <h4>{{ op.species.name }}</h4>
+                <p style="font-size:12px;">Lv.{{ op.level }} | HP: {{ op.current_hp }}</p>
             </div>
         {% empty %}
             <p style="color:#999;">队伍中没有其他宝可梦了...</p>
         {% endfor %}
     </div>
 
-    <!-- ✅ 完整 JS（替换你原来的 script） -->
     {% csrf_token %}
-    <script src="{% static 'battles/js/battle.js' %}?v=2"></script>
+    <script src="{% static 'battles/js/battle.js' %}?t={% now 'U' %}"></script>
 </body>
 </html>

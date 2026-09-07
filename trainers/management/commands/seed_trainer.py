@@ -47,5 +47,5 @@ class Command(BaseCommand):
                 created_count += 1
 
         self.stdout.write(
-            self.style.SUCCESS(f"✅ 完成！新增 {created_count} 只，训练师共拥有 {trainer.ownedpokemon_set.count()} 只")
+            self.style.SUCCESS(f"✅ 完成！新增 {created_count} 只，训练师共拥有 {trainer.owned_pokemons.count()} 只")
         )
