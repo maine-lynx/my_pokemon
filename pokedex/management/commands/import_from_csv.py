@@ -80,10 +80,11 @@ class Command(BaseCommand):
             reader = csv.DictReader(f)
             for row in reader:
                 pid = int(row["id"])
+                sid = int(row.get("species_id") or pid)
                 pokemons.append(
                     Pokemon(
                         pokemon_id=pid,
-                        species_id=int(row.get("species_id") or 0),
+                        species_id=sid,
                         name=prettify(row["identifier"]),
                         height=int(row.get("height") or 0),
                         weight=int(row.get("weight") or 0),
@@ -92,7 +93,7 @@ class Command(BaseCommand):
                         base_attack=50,
                         base_defense=50,
                         base_speed=50,
-                        sprite_url=POKEAPI_SPRITE_BASE.format(id=pid),
+                        sprite_url=POKEAPI_SPRITE_BASE.format(id=sid),
                     )
                 )
         Pokemon.objects.bulk_create(pokemons, ignore_conflicts=True)
