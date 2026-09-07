@@ -140,22 +140,31 @@ function handleBattleEnd(data, endStatuses, panelId) {
 /**
  * 通用面板切换：打开 targetPanelId，关闭 otherPanelId
  */
-function togglePanel(targetPanelId, otherPanelId) {
-    const otherPanel = document.getElementById(otherPanelId);
-    if (otherPanel) otherPanel.style.display = 'none';
+ function hideAllPanels() {
+    ['moves-panel', 'items-panel', 'team-panel'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+}
 
+function togglePanel(targetPanelId) {
     const panel = document.getElementById(targetPanelId);
-    if (panel) {
-        panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
-    }
+    if (!panel) return;
+    const isShowing = panel.style.display === 'flex';
+    hideAllPanels();
+    if (!isShowing) panel.style.display = 'flex';
 }
 
 function showMoves() {
-    togglePanel('moves-panel', 'items-panel');
+    togglePanel('moves-panel');
 }
 
 function showItems() {
-    togglePanel('items-panel', 'moves-panel');
+    togglePanel('items-panel');
+}
+
+function showTeam() {
+    togglePanel('team-panel');
 }
 
 // ============================================================================
@@ -215,9 +224,59 @@ async function useMove(moveId, moveName) {
         setButtonsDisabled(btnSelector, false);
     }
 }
+// 六、切换宝可梦
+// ============================================================================
+
+async function switchPokemon(pokemonId) {
+    const btnSelector = '.team-card';
+    document.querySelectorAll(btnSelector).forEach(el => el.style.pointerEvents = 'none');
+
+    try {
+        const data = await postWithCSRF(`/battles/switch/${pokemonId}/`);
+        if (!data) {
+            document.querySelectorAll(btnSelector).forEach(el => el.style.pointerEvents = 'auto');
+            return;
+        }
+
+        updateBattleUI(data);
+
+        const sprite = document.querySelector('.pokemon-card:first-child .pokemon-sprite');
+        if (sprite && data.new_sprite_url) {
+            sprite.src = data.new_sprite_url;
+            sprite.classList.remove('wild');
+        }
+
+        const lvlText = document.getElementById('player-level');
+        if (lvlText && data.new_name) {
+            lvlText.textContent = `${data.new_name} (Lv.${data.new_level})`;
+        }
+
+        if (data.new_exp !== undefined && data.new_exp_to_next !== undefined) {
+            const expFill = document.getElementById('exp-fill');
+            const expText = document.getElementById('exp-text');
+            const pct = Math.min(100, (data.new_exp / data.new_exp_to_next * 100).toFixed(1));
+            if (expFill) expFill.style.width = pct + '%';
+            if (expText) expText.textContent = `EXP: ${data.new_exp} / ${data.new_exp_to_next}`;
+        }
+
+        const hpBar = document.getElementById('player-hp');
+        if (hpBar && data.player_max_hp) {
+            hpBar.setAttribute('data-max', data.player_max_hp);
+        }
+
+        if (!handleBattleEnd(data, ['won', 'lost'], 'team-panel')) {
+            document.querySelectorAll(btnSelector).forEach(el => el.style.pointerEvents = 'auto');
+        }
+
+    } catch (error) {
+        console.error('切换失败:', error);
+        alert('切换宝可梦失败：' + error.message);
+        document.querySelectorAll(btnSelector).forEach(el => el.style.pointerEvents = 'auto');
+    }
+}
 
 // ============================================================================
-// 六、UI 更新工具函数
+// 七、UI 更新工具函数
 // ============================================================================
 
 function updateHpBar(elementId, currentHp) {

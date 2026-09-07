@@ -49,6 +49,7 @@ def start_battle(request, wild_pokemon_id):
     # django自动序列化存到数据库，下次请求还能取出来
     battle_data = {
         "player_pokemon_id": player_pokemon.id,  # 只存储id，对象没法序列化
+        "player_name": player_pokemon.nickname or player_pokemon.species.name,
         "wild_species_id": wild_species.id,
         "wild_level": wild_level,
         "wild_name": wild_species.name,
@@ -92,9 +93,14 @@ def battle_view(request):
     moves = player_pokemon.moves.all()
 
     trainer_items = []
+    team = []
     if hasattr(request.user, "trainer"):
         trainer_items = TrainerItem.objects.filter(trainer=request.user.trainer, quantity__gt=0).select_related("item")
-
+        team = (
+            OwnedPokemon.objects.filter(trainer=request.user.trainer)
+            .exclude(id=battle["player_pokemon_id"])
+            .select_related("species")
+        )
     # render类比：
     #   html = template.render（参数）
     #   return html
@@ -107,7 +113,64 @@ def battle_view(request):
             "wild_species": wild_species,
             "moves": moves,
             "trainer_items": trainer_items,
+            "team": team,
         },
+    )
+
+
+@require_POST
+def switch_pokemon(request, pokemon_id):
+    """切换宝可梦（AJAX 接口）"""
+    battle = request.session.get("battle")
+    if not battle or battle.get("status") != "ongoing":
+        return JsonResponse({"error": "战斗已结束或不存在"}, status=400)
+
+    try:
+        new_pokemon = OwnedPokemon.objects.get(id=pokemon_id, trainer=request.user.trainer)
+    except OwnedPokemon.DoesNotExist:
+        return JsonResponse({"error": "该宝可梦不属于你"}, status=400)
+
+    if new_pokemon.current_hp <= 0:
+        return JsonResponse({"error": "这只宝可梦已经倒下了，无法切换！"}, status=400)
+
+    if new_pokemon.id == battle["player_pokemon_id"]:
+        return JsonResponse({"error": "这只宝可梦已经在场上了！"}, status=400)
+
+    log = []
+    old_name = battle.get("player_name", "???")
+    log.append(f"回来吧，{old_name}！")
+
+    battle["player_pokemon_id"] = new_pokemon.id
+    battle["player_hp"] = new_pokemon.current_hp
+    battle["player_max_hp"] = new_pokemon.current_hp
+    battle["player_name"] = new_pokemon.nickname or new_pokemon.species.name
+    log.append(f"去吧，{battle['player_name']}！")
+
+    wild = Pokemon.objects.get(id=battle["wild_species_id"])
+    wild_damage = wild.base_attack + battle["wild_level"]
+    battle["player_hp"] = max(0, battle["player_hp"] - wild_damage)
+    log.append(f"野生 {wild.name} 趁机攻击！造成 {wild_damage} 点伤害！")
+
+    if battle["player_hp"] <= 0:
+        log.append(f"{battle['player_name']} 倒下了！")
+        battle["status"] = "lost"
+
+    request.session.modified = True
+    request.session["battle"] = battle
+
+    return JsonResponse(
+        {
+            "log": log,
+            "player_hp": battle["player_hp"],
+            "player_max_hp": battle["player_max_hp"],
+            "wild_hp": battle["wild_hp"],
+            "status": battle.get("status", "ongoing"),
+            "new_name": battle["player_name"],
+            "new_level": new_pokemon.level,
+            "new_exp": new_pokemon.exp,
+            "new_exp_to_next": new_pokemon.exp_to_next_level,
+            "new_sprite_url": new_pokemon.species.sprite_url,
+        }
     )
 
 

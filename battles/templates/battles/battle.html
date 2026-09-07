@@ -12,7 +12,7 @@
             width: 240px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             text-align: center;
         }
-        pokemon-sprite {
+        .pokemon-sprite {
             width: 120px;
             height: 120px;
             object-fit: contain;
@@ -20,6 +20,10 @@
         }
         .pokemon-sprite.wild {
             transform: scaleX(-1);
+            <button onclick="showMoves()">⚔️ 战斗</button>
+            <button onclick="showItems()">🎒 背包</button>
+            <button onclick="showTeam()">📋 宝可梦</button>
+            <button onclick="alert('逃跑成功！')">🏃 逃跑</button>
         }
         .hp-bar { background: #ddd; height: 14px; border-radius: 7px; margin: 8px 0; overflow: hidden; }
         .hp-fill { background: #4CAF50; height: 100%; transition: width 0.3s; }
@@ -44,6 +48,18 @@
             padding: 12px 20px; font-size: 15px; cursor: pointer;
             border: 2px solid #4CAF50; border-radius: 8px; background: #e8f5e9;
         }
+        .team-panel {
+            display: none;
+            gap: 10px; flex-wrap: wrap; margin-top: 12px;
+        }
+         .team-card {
+            border: 2px solid #2196F3; border-radius: 10px; padding: 10px;
+            width: 140px; text-align: center; cursor: pointer;
+            background: #e3f2fd; transition: transform 0.1s;
+        }
+        .team-card:hover { transform: scale(1.05); background: #bbdefb; }
+        .team-card img { width: 64px; height: 64px; image-rendering: pixelated; }
+        .team-card .fainted { opacity: 0.4; }
     </style>
 </head>
 <body>
@@ -95,7 +111,7 @@
     <div class="menu-buttons">
         <button onclick="showMoves()">⚔️ 战斗</button>
         <button onclick="showItems()">🎒 背包</button>
-        <button onclick="alert('宝可梦列表待开发')">📋 宝可梦</button>
+        <button onclick="showTeam()">📋 宝可梦</button>
         <button onclick="alert('逃跑成功！')">🏃 逃跑</button>
     </div>
 
@@ -121,9 +137,24 @@
             <p style="color:#999;">背包空空如也...</p>
         {% endfor %}
     </div>
+    <!-- 宝可梦切换面板 -->
+    <div class="team-panel" id="team-panel">
+        {% for op in team %}
+            <div class="team-card {% if op.current_hp <= 0 %}fainted{% endif %}"
+                 onclick="{% if op.current_hp > 0 %}switchPokemon({{ op.id }}){% else %}alert('这只宝可梦已经倒下了！'){% endif %}">
+                {% if op.species.sprite_url %}
+                    <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}">
+                {% endif %}
+                <h4>{{ op.nickname|default:op.species.name }}</h4>
+                <p style="font-size:12px;">Lv.{{ op.level }} | HP: {{ op.current_hp }}/{{ op.current_hp }}</p>
+            </div>
+        {% empty %}
+            <p style="color:#999;">队伍中没有其他宝可梦了...</p>
+        {% endfor %}
+    </div>
 
     <!-- ✅ 完整 JS（替换你原来的 script） -->
     {% csrf_token %}
-    <script src="{% static 'battles/js/battle.js' %}?v=1"></script>
+    <script src="{% static 'battles/js/battle.js' %}?v=2"></script>
 </body>
 </html>
