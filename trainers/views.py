@@ -109,7 +109,7 @@ def new_game(request):
         trainer.owned_pokemons.filter(id__in=selected_ids).update(is_active=True)
 
         first_op = trainer.owned_pokemons.filter(id=selected_ids[0]).select_related("species").first()
-        return redirect(f"/battles/{first_op.species.id}/")
+        return redirect(f"/battles/{first_op.species.pokemon_id}/")
 
     owned_pokemons = OwnedPokemon.objects.filter(trainer=trainer).select_related("species")
     return render(request, "new_game.html", {"owned_pokemons": owned_pokemons})

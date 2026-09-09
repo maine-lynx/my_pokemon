@@ -30,7 +30,7 @@ def start_battle(request, wild_pokemon_id):
     """
     try:
         # 获取属性
-        wild_species = Pokemon.objects.get(id=wild_pokemon_id)
+        wild_species = Pokemon.objects.get(pokemon_id=wild_pokemon_id)
     except Pokemon.DoesNotExist:
         return HttpResponse("野生宝可梦不存在")
     # 检查当前用户有没有绑定训练师
@@ -81,7 +81,7 @@ def battle_view(request):
     # 第一场战斗开始，或者上一场战斗结束
     if not battle or battle["status"] != "ongoing":
         # 随机挑选一直宝可梦重新开始
-        species_ids = list(Pokemon.objects.values_list("id", flat=True))
+        species_ids = list(Pokemon.objects.values_list("pokemon_id", flat=True))
         if not species_ids:
             return redirect("home")
         wild_id = random.choice(species_ids)
@@ -146,7 +146,7 @@ def switch_pokemon(request, pokemon_id):
     battle["player_name"] = new_pokemon.nickname or new_pokemon.species.name
     log.append(f"去吧，{battle['player_name']}！")
 
-    wild = Pokemon.objects.get(id=battle["wild_species_id"])
+    wild = Pokemon.objects.get(pokemon_id=battle["wild_species_id"])
     wild_damage = wild.base_attack + battle["wild_level"]
     battle["player_hp"] = max(0, battle["player_hp"] - wild_damage)
     log.append(f"野生 {wild.name} 趁机攻击！造成 {wild_damage} 点伤害！")

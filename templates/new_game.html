@@ -1,5 +1,17 @@
-
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>选择队伍 - PokMMO</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: #f5f5f5; padding: 30px; }
+    </style>
+</head>
+<body>
 <div style="display: flex; gap: 24px;">
+<!-- ... existing code ... -->
+    <div style="display: flex; gap: 24px;">
     <!-- 左侧：宝可梦选择区 -->
     <div style="flex: 2;">
         <h2 style="margin-bottom: 16px;">选择你的队伍（最多 6 只）</h2>
@@ -15,8 +27,12 @@
                 {% for op in owned_pokemons %}
                     <label class="card" style="cursor: pointer; border: 3px solid transparent; padding: 12px; text-align: center; border-radius: 8px; background: #f9f9f9; width: 140px;">
                         <input type="checkbox" name="selected_pokemons" value="{{ op.id }}" style="display:none;">
-                        <div style="font-size:80px;">{{ op.species.name|first|upper }}</div>
-                        <h3>{{ op.nickname }}</h3>
+                        {% if op.species.sprite_url %}
+                            <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}"
+                                 style="width:80px;height:80px;object-fit:contain;image-rendering:pixelated;"
+                                 onerror="this.style.display='none'">
+                        {% endif %}
+                        <h3>{{ op.nickname|default:op.species.name }}</h3>
                         <p>#{{ op.species.id }} · Lv.{{ op.level }}</p>
                     </label>
                 {% empty %}
@@ -91,3 +107,11 @@
         countSpan.innerText = count;
     }
 </script>
+
+</div>
+
+<script>
+<!-- ... existing code ... -->
+</script>
+</body>
+</html>

@@ -93,7 +93,7 @@ class Command(BaseCommand):
                         base_attack=50,
                         base_defense=50,
                         base_speed=50,
-                        sprite_url=POKEAPI_SPRITE_BASE.format(id=sid),
+                        sprite_url=POKEAPI_SPRITE_BASE.format(id=pid),
                     )
                 )
         Pokemon.objects.bulk_create(pokemons, ignore_conflicts=True)

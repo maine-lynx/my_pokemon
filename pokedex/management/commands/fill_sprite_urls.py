@@ -6,14 +6,13 @@ POKEAPI_SPRITE_BASE = "https://raw.githubusercontent.com/PokeAPI/sprites/master/
 
 
 class Command(BaseCommand):
-    help = "为所有宝可梦填充 PokeAPI 官方精灵图片 URL（使用 species_id）"
+    help = "为所有宝可梦填充 PokeAPI 官方精灵图片 URL（使用 pokemon_id）"
 
     def handle(self, *args, **options):
         updated = 0
         skipped = 0
         for pokemon in Pokemon.objects.all():
-            # ✅ 优先用 species_id（物种编号），避免形态变体 ID 超出范围
-            sprite_id = pokemon.species_id if pokemon.species_id else pokemon.pokemon_id
+            sprite_id = pokemon.pokemon_id
             if not sprite_id or sprite_id <= 0:
                 skipped += 1
                 continue

@@ -6,33 +6,38 @@ from trainers.models import OwnedPokemon, Trainer
 
 
 class Command(BaseCommand):
-    help = "给超级用户「小智」灌入全图鉴宝可梦"
+    help = "给指定用户灌入全图鉴宝可梦"
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--username",
+            type=str,
+            default="mianyinsheli",
+            help="目标用户名（默认 mianyinsheli）",
+        )
 
     def handle(self, *args, **options):
-        # 1. 获取超级用户
+        username = options["username"]
         try:
-            user = User.objects.get(username="mianyinsheli")
+            user = User.objects.get(username=username)
         except User.DoesNotExist:
-            self.stdout.write(self.style.ERROR("❌ 用户 mianyinsheli 不存在，请先创建超级用户"))
+            self.stdout.write(self.style.ERROR(f"❌ 用户 {username} 不存在，请先创建"))
             return
 
-        # 2. 训练师
-        trainer, created = Trainer.objects.get_or_create(user=user, defaults={"name": "小智"})
-        if not created and trainer.name != "小智":
-            trainer.name = "小智"
+        trainer, created = Trainer.objects.get_or_create(user=user, defaults={"name": username})
+        if not created and trainer.name != username:
+            trainer.name = username
             trainer.save()
 
         self.stdout.write(f"训练师: {trainer.name} (新创建: {created})")
 
-        # 3. 全图鉴
         all_species = Pokemon.objects.all()
         total = all_species.count()
         self.stdout.write(f"图鉴总数: {total}")
 
-        # 4. 批量创建
         created_count = 0
         for species in all_species:
-            obj, is_new = OwnedPokemon.objects.get_or_create(
+            _, is_new = OwnedPokemon.objects.get_or_create(
                 trainer=trainer,
                 species=species,
                 defaults={
