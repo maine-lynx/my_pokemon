@@ -1,6 +1,20 @@
 // ============================================================================
 // 一、CSRF Token 相关
 // ============================================================================
+function handleSpriteError(img) {
+    if (img.dataset.fallbackTried) {
+        img.style.display = 'none';
+        return;
+    }
+    const speciesId = img.dataset.speciesId;
+    if (speciesId) {
+        img.dataset.fallbackTried = 'true';
+        img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${speciesId}.png`;
+    } else {
+        img.style.display = 'none';
+    }
+}
+
 
 function setCookie(name, value, days) {
     let expires = "";

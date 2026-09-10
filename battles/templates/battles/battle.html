@@ -66,7 +66,7 @@
             <h3 id="player-level">{{ player_pokemon.species.name }} (Lv.{{ player_pokemon.level }})</h3>
             {% if player_pokemon.species.sprite_url %}
                 <img class="pokemon-sprite" src="{{ player_pokemon.species.sprite_url }}" alt="{{ player_pokemon.species.name }}"
-                     onerror="this.style.display='none'">
+                     onerror="handleSpriteError(this)">
             {% endif %}
             <p>HP: <span id="player-hp-text">{{ battle.player_hp }}</span> / {{ battle.player_max_hp }}</p>
             <div class="hp-bar">
@@ -84,7 +84,7 @@
             <h3>野生 {{ wild_species.name }} (Lv.{{ battle.wild_level }})</h3>
             {% if wild_species.sprite_url %}
                 <img class="pokemon-sprite wild" src="{{ wild_species.sprite_url }}" alt="{{ wild_species.name }}"
-                     onerror="this.style.display='none'">
+                     onerror="handleSpriteError(this)">
             {% endif %}
             <p>HP: {{ battle.wild_hp }} / {{ battle.wild_max_hp }}</p>
             <div class="hp-bar">
@@ -132,7 +132,7 @@
                  onclick="{% if op.current_hp > 0 %}switchPokemon({{ op.id }}){% else %}alert('这只宝可梦已经倒下了！'){% endif %}">
                 {% if op.species.sprite_url %}
                     <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}"
-                         onerror="this.style.display='none'">
+                         onerror="handleSpriteError(this)">
                 {% endif %}
                 <h4>{{ op.species.name }}</h4>
                 <p style="font-size:12px;">Lv.{{ op.level }} | HP: {{ op.current_hp }}</p>

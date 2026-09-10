@@ -29,8 +29,8 @@
                         <input type="checkbox" name="selected_pokemons" value="{{ op.id }}" style="display:none;">
                         {% if op.species.sprite_url %}
                             <img src="{{ op.species.sprite_url }}" alt="{{ op.species.name }}"
-                                 style="width:80px;height:80px;object-fit:contain;image-rendering:pixelated;"
-                                 onerror="this.style.display='none'">
+                                 data-species-id="{{ op.species.species_id|default:op.species.pokemon_id }}"
+                                 onerror="handleSpriteError(this)">
                         {% endif %}
                         <h3>{{ op.nickname|default:op.species.name }}</h3>
                         <p>#{{ op.species.id }} · Lv.{{ op.level }}</p>
