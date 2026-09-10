@@ -97,7 +97,7 @@ def battle_view(request):
     if hasattr(request.user, "trainer"):
         trainer_items = TrainerItem.objects.filter(trainer=request.user.trainer, quantity__gt=0).select_related("item")
         team = (
-            OwnedPokemon.objects.filter(trainer=request.user.trainer)
+            OwnedPokemon.objects.filter(trainer=request.user.trainer, is_active=True)
             .exclude(id=battle["player_pokemon_id"])
             .select_related("species")
         )
@@ -126,7 +126,7 @@ def switch_pokemon(request, pokemon_id):
         return JsonResponse({"error": "战斗已结束或不存在"}, status=400)
 
     try:
-        new_pokemon = OwnedPokemon.objects.get(id=pokemon_id, trainer=request.user.trainer)
+        new_pokemon = OwnedPokemon.objects.get(id=pokemon_id, trainer=request.user.trainer, is_active=True)
     except OwnedPokemon.DoesNotExist:
         return JsonResponse({"error": "该宝可梦不属于你"}, status=400)
 
