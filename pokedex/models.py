@@ -17,6 +17,20 @@ class Type(models.Model):
         related_name="weak_against",  # 反向访问名，从被克制的方向查找回来
         blank=True,  # Django表单层面允许不填（即可以不克制任何关系）
     )
+    # 抵抗关系：该属性抵抗哪些属性的攻击（受到 0.5x 伤害）
+    resist = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        related_name="resisted_by",
+        blank=True,
+    )
+    # 免疫关系：该属性免疫哪些属性的攻击（受到 0x 伤害）
+    immune = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        related_name="immune_by",
+        blank=True,
+    )
 
     # django后台显示时调用这个方法
     def __str__(self):

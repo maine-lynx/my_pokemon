@@ -241,6 +241,8 @@ async function useMove(moveId, moveName) {
 // 六、切换宝可梦
 // ============================================================================
 
+// ... existing code ...
+
 async function switchPokemon(pokemonId) {
     const btnSelector = '.team-card';
     document.querySelectorAll(btnSelector).forEach(el => el.style.pointerEvents = 'none');
@@ -278,6 +280,41 @@ async function switchPokemon(pokemonId) {
             hpBar.setAttribute('data-max', data.player_max_hp);
         }
 
+        // 更新技能面板
+        if (data.moves) {
+            const movesPanel = document.getElementById('moves-panel');
+            if (movesPanel) {
+                movesPanel.innerHTML = data.moves.map(move =>
+                    `<button class="move-btn" onclick="useMove(${move.id}, '${move.name}')">` +
+                    `${move.name}<br><small>威力: ${move.power}</small></button>`
+                ).join('');
+            }
+        }
+
+        // 更新队伍面板
+        if (data.team) {
+            const teamPanel = document.getElementById('team-panel');
+            if (teamPanel) {
+                teamPanel.innerHTML = data.team.map(op => {
+                    const faintedClass = op.fainted ? 'fainted' : '';
+                    const onclick = op.fainted
+                        ? `alert('这只宝可梦已经倒下了！')`
+                        : `switchPokemon(${op.id})`;
+                    const spriteHtml = op.sprite_url
+                        ? `<img src="${op.sprite_url}" alt="${op.name}" onerror="handleSpriteError(this)">`
+                        : '';
+                    return `<div class="team-card ${faintedClass}" onclick="${onclick}">` +
+                        `${spriteHtml}` +
+                        `<h4>${op.name}</h4>` +
+                        `<p style="font-size:12px;">Lv.${op.level} | HP: ${op.current_hp}</p>` +
+                        `</div>`;
+                }).join('');
+                if (data.team.length === 0) {
+                    teamPanel.innerHTML = '<p style="color:#999;">队伍中没有其他宝可梦了...</p>';
+                }
+            }
+        }
+
         if (!handleBattleEnd(data, ['won', 'lost'], 'team-panel')) {
             document.querySelectorAll(btnSelector).forEach(el => el.style.pointerEvents = 'auto');
         }
@@ -289,6 +326,7 @@ async function switchPokemon(pokemonId) {
     }
 }
 
+// ... existing code ...
 // ============================================================================
 // 七、UI 更新工具函数
 // ============================================================================
